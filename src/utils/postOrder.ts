@@ -190,7 +190,7 @@ const postOrder = async (
             await UserActivity.updateOne({ _id: trade._id }, { bot: true });
         }
     } else {
-        console.log('Condition not supported');
+        console.log('condition not supported');
     }
 };
 
