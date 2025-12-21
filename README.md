@@ -1,61 +1,237 @@
 # Polymarket Copy Trading Bot
 
-## Introduction
-This project is a Polymarket Copy Trading Bot that allows users to automatically copy trades from a selected trader on Polymarket.
+A **production-grade, real-time copy trading system** for **Polymarket**, designed to automatically mirror trades from selected wallets with high reliability, low latency, and robust risk controls. Built in **TypeScript** on **Bun**, the bot integrates directly with Polymarket’s **Central Limit Order Book (CLOB)** and real-time WebSocket feeds for institutional-level execution.
 
-## Features
-- **Automated Trading**: Automatically copy trades from a selected trader.
-- **Real-time Monitoring**: Continuously monitor the selected trader's activity.
-- **Customizable Settings**: Configure trading parameters and risk management.
+---
 
-## Installation
-1. Install latest version of Node.js and npm
-2. Navigate to the project directory:
-    ```bash
-    cd polymarket_copy_trading_bot
-    ```
-3. Create `.env` file:
-    ```bash
-    touch .env
-    ```
-4. Configure env variables:
-    ```typescript
-    USER_ADDRESS = 'Selected account wallet address to copy'
+## Overview
 
-    PROXY_WALLET = 'Your Polymarket account address'
-    PRIVATE_KEY = 'My wallet private key'
+The Polymarket Copy Trading Bot continuously monitors one or more target wallets and replicates their trading activity according to configurable risk parameters. It is designed for **professional deployment**, supporting automated redemptions, precise order handling, and comprehensive logging.
 
-    CLOB_HTTP_URL = 'https://clob.polymarket.com/'
-    CLOB_WS_URL = 'wss://ws-subscriptions-clob.polymarket.com/ws'
+### Core Capabilities
 
-    FETCH_INTERVAL = 1      // default is 1 second
-    TOO_OLD_TIMESTAMP = 1   // default is 1 hour
-    RETRY_LIMIT = 3         // default is 3 times
+* **Low-Latency Trade Copying** – Real-time WebSocket monitoring with millisecond-level execution
+* **Automated Market Redemption** – Automatically redeems winning positions on market resolution
+* **Advanced Risk Management** – Size multipliers, max order caps, and negative-risk controls
+* **Flexible Order Execution** – Supports FAK (Fill-and-Kill) and FOK (Fill-or-Kill)
+* **Local Holdings Accounting** – Persistent tracking of token balances for accurate redemptions
+* **Multi-Outcome Compatibility** – Works seamlessly with binary and multi-outcome markets
 
-    MONGO_URI = 'mongodb+srv://polymarket_copytrading_bot:V5ufvi9ra1dsOA9M@cluster0.j1flc.mongodb.net/polymarket_copytrading'
+---
 
-    RPC_URL = 'https://polygon-mainnet.infura.io/v3/90ee27dc8b934739ba9a55a075229744'
+## System Architecture
 
-    USDC_CONTRACT_ADDRESS = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174'
-    ```
-3. Install the required dependencies:
-    ```bash
-    npm install
-    ```
-5. Build the project:
-    ```bash
-    npm run build
-    ```
-6. Run BOT:
-    ```bash
-    npm run start
-    ```
-7. ⚠ Choose reasonable location for the bot(Many users faced this problem, read this carefully before setting up the bot):
+### Technology Stack
 
-   For users facing IP address-related access issues with Polymarket due to geographic restrictions, I recommend using [tradingvps.io](https://app.tradingvps.io/link.php?id=11) with the Germany location. This VPS service offers ultra-low latency and is physically close to Polymarket’s servers, ensuring faster response times and a smoother trading experience. It is specifically optimized for traders and easy to set up, making it an excellent choice for both beginners and experienced users looking to avoid IP-based blocks.
- 
-## Contributing
-Contributions are welcome! Please open an issue or submit a pull request. And if you are interested in this project, please consider giving it a star✨.
+* **Runtime**: Bun (TypeScript-first runtime)
+* **Language**: TypeScript (v5.9+)
+* **Blockchain**: Polygon (Ethereum-compatible L2)
+* **Web3**: Ethers.js v6
+* **APIs**:
 
-## Contact
-For updated version or any questions, please contact me at [Telegram](https://t.me/BlackSky_jose).
+  * `@polymarket/clob-client`
+  * `@polymarket/real-time-data-client`
+* **Logging**: Structured, production-ready logger
+
+### High-Level Flow
+
+```
+Real-Time Data Client (WebSocket)
+        ↓
+Trade Monitor (Wallet Filtering & Validation)
+        ↓
+Order Builder (Sizing, Risk, Tick Precision)
+        ↓
+CLOB Client (Execution & Allowances)
+        ↓
+Holdings Manager (Local State)
+        ↓
+Redemption Engine (Resolved Markets)
+```
+
+---
+
+##  Installation
+
+### Prerequisites
+
+* **Bun** v1.0+
+* **Node.js** 18+
+* **Polygon Wallet** funded with USDC
+* **Polymarket API Credentials**
+
+### Setup Steps
+
+```bash
+git clone <repository-url>
+cd polymarket-copytrading
+bun install
+```
+
+Create environment configuration:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env`:
+
+```env
+PRIVATE_KEY=your_private_key
+TARGET_WALLET=0xTargetWallet
+
+SIZE_MULTIPLIER=1.0
+MAX_ORDER_AMOUNT=100
+ORDER_TYPE=FAK
+TICK_SIZE=0.01
+NEG_RISK=false
+ENABLE_COPY_TRADING=true
+
+REDEEM_DURATION=60
+
+CHAIN_ID=137
+CLOB_API_URL=https://clob.polymarket.com
+```
+
+Initialize and start the bot:
+
+```bash
+bun src/index.ts
+```
+
+On first launch, API credentials are generated and stored securely.
+
+---
+
+## ⚙️ Configuration Reference
+
+| Variable              | Description                    |
+| --------------------- | ------------------------------ |
+| `PRIVATE_KEY`         | Trading wallet private key     |
+| `TARGET_WALLET`       | Wallet address to mirror       |
+| `SIZE_MULTIPLIER`     | Trade size scaling factor      |
+| `MAX_ORDER_AMOUNT`    | Max USDC per trade             |
+| `ORDER_TYPE`          | `FAK` or `FOK`                 |
+| `TICK_SIZE`           | Market price precision         |
+| `NEG_RISK`            | Allow negative balances        |
+| `ENABLE_COPY_TRADING` | Master on/off switch           |
+| `REDEEM_DURATION`     | Auto-redeem interval (minutes) |
+
+---
+
+##  Usage
+
+### Start Copy Trading
+
+```bash
+bun src/index.ts
+```
+
+The bot will:
+
+1. Establish WebSocket connection
+2. Subscribe to Polymarket activity feeds
+3. Detect trades from the target wallet
+4. Mirror trades based on configured rules
+5. Periodically redeem resolved markets
+
+### Redemption Commands
+
+```bash
+bun src/auto-redeem.ts --dry-run
+bun src/auto-redeem.ts --api --max 500
+bun src/redeem.ts <conditionId>
+```
+
+---
+
+##  Execution Logic
+
+### Trade Lifecycle
+
+1. Detect target wallet trade
+2. Validate payload integrity
+3. Apply sizing and risk limits
+4. Normalize price to tick size
+5. Check balances and allowances
+6. Submit order to CLOB
+7. Update local holdings
+8. Log execution result
+
+### Order Builder Highlights
+
+* Buy and sell logic handled independently
+* Partial fill support (FAK)
+* Strict all-or-nothing enforcement (FOK)
+* Precision-safe arithmetic
+* Graceful failure handling
+
+---
+
+##  Project Structure
+
+```
+src/
+ ├── index.ts
+ ├── auto-redeem.ts
+ ├── redeem.ts
+ ├── data/
+ ├── order-builder/
+ ├── providers/
+ ├── security/
+ └── utils/
+```
+
+---
+
+##  Logging & Monitoring
+
+* Trade detection and execution
+* Balance and allowance checks
+* Redemption outcomes
+* Structured logs for debugging and audits
+
+Log levels: `info`, `success`, `warning`, `error`
+
+---
+
+##  Risk Disclosure
+
+* Copy trading amplifies both profits and losses
+* Liquidity and slippage risks apply
+* Gas fees incurred on every transaction
+* WebSocket or API outages may impact execution
+
+**Best Practices**:
+
+* Start with low multipliers
+* Enforce strict max order sizes
+* Monitor balances regularly
+* Test using dry-run modes
+
+---
+
+## 🛠️ Development
+
+```bash
+bun run tsc --noEmit
+bun --watch src/index.ts
+```
+
+---
+
+##  Contact & Support
+
+For deployment support, custom integrations, or professional inquiries:
+
+ **Telegram**: [https://t.me/blacksky_jose](https://t.me/blacksky_jose)
+
+---
+
+## License
+
+ISC
+
+---
+
+**Disclaimer**: This software is provided as-is without warranties. Trading prediction markets involves substantial risk. Use responsibly and only with capital you can afford to lose.
