@@ -26,13 +26,25 @@ const init = async () => {
 const fetchTradeData = async () => {
     try {
         // Fetch user activities from Polymarket API
-        const activities: UserActivityInterface[] = await fetchData(
+        const activities_raw = await fetchData(
             `https://data-api.polymarket.com/activities?user=${USER_ADDRESS}`
         );
 
-        if (!activities || activities.length === 0) {
+        // Validate API response is an array
+        if (!Array.isArray(activities_raw)) {
+            if (activities_raw === null || activities_raw === undefined) {
+                // Network error or empty response - already handled by fetchData
+                return;
+            }
+            console.warn('API returned non-array response, skipping...');
             return;
         }
+        
+        if (activities_raw.length === 0) {
+            return;
+        }
+        
+        const activities: UserActivityInterface[] = activities_raw;
 
         // Filter for TRADE type activities only
         const trades = activities.filter((activity) => activity.type === 'TRADE');

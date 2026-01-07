@@ -56,15 +56,25 @@ const postOrder = async (
                 };
             }
             console.log('Order args:', order_arges);
+            // Validate order amount is positive
+            if (order_arges.amount <= 0) {
+                console.log('Invalid order amount - skipping');
+                break;
+            }
+            
             const signedOrder = await clobClient.createMarketOrder(order_arges);
             const resp = await clobClient.postOrder(signedOrder, OrderType.FOK);
             if (resp.success === true) {
                 retry = 0;
                 console.log('Successfully posted order:', resp);
                 remaining -= order_arges.amount;
+                // Small delay after successful order
+                await new Promise((resolve) => setTimeout(resolve, 500));
             } else {
                 retry += 1;
-                console.log('Error posting order: retrying...', resp);
+                console.log(`Error posting order: retrying... (${retry}/${RETRY_LIMIT})`, resp);
+                // Delay before retry to avoid spamming API
+                await new Promise((resolve) => setTimeout(resolve, 2000));
             }
         }
         if (retry >= RETRY_LIMIT) {
@@ -74,9 +84,28 @@ const postOrder = async (
         }
     } else if (condition === 'buy') {       //Buy strategy
         console.log('Buy Strategy...');
-        const ratio = my_balance / (user_balance + trade.usdcSize);
+        
+        // Validate denominator to prevent division by zero
+        const denominator = user_balance + trade.usdcSize;
+        if (denominator <= 0) {
+            console.log('Invalid user balance or trade size - cannot calculate ratio');
+            await UserActivity.updateOne({ _id: trade._id }, { bot: true });
+            return;
+        }
+        
+        // Validate my balance is sufficient
+        if (my_balance <= 0) {
+            console.log('Insufficient balance - cannot execute buy order');
+            await UserActivity.updateOne({ _id: trade._id }, { bot: true });
+            return;
+        }
+        
+        const ratio = my_balance / denominator;
         console.log('ratio', ratio);
         let remaining = trade.usdcSize * ratio;
+        
+        // Ensure remaining doesn't exceed available balance
+        remaining = Math.min(remaining, my_balance);
         let retry = 0;
         while (remaining > 0 && retry < RETRY_LIMIT) {
             const orderBook = await clobClient.getOrderBook(trade.asset);
@@ -113,15 +142,25 @@ const postOrder = async (
                 };
             }
             console.log('Order args:', order_arges);
+            // Validate order amount is positive
+            if (order_arges.amount <= 0) {
+                console.log('Invalid order amount - skipping');
+                break;
+            }
+            
             const signedOrder = await clobClient.createMarketOrder(order_arges);
             const resp = await clobClient.postOrder(signedOrder, OrderType.FOK);
             if (resp.success === true) {
                 retry = 0;
                 console.log('Successfully posted order:', resp);
                 remaining -= order_arges.amount;
+                // Small delay after successful order
+                await new Promise((resolve) => setTimeout(resolve, 500));
             } else {
                 retry += 1;
-                console.log('Error posting order: retrying...', resp);
+                console.log(`Error posting order: retrying... (${retry}/${RETRY_LIMIT})`, resp);
+                // Delay before retry to avoid spamming API
+                await new Promise((resolve) => setTimeout(resolve, 2000));
             }
         }
         if (retry >= RETRY_LIMIT) {
@@ -156,32 +195,51 @@ const postOrder = async (
             }, orderBook.bids[0]);
 
             console.log('Max price bid:', maxPriceBid);
+            
+            // Price slippage check for sell (similar to buy)
+            const bidPrice = parseFloat(maxPriceBid.price);
+            if (trade.price && bidPrice + 0.05 < trade.price) {
+                console.log('Too big price difference for sell - do not copy');
+                await UserActivity.updateOne({ _id: trade._id }, { bot: true });
+                break;
+            }
+            
             let order_arges;
             if (remaining <= parseFloat(maxPriceBid.size)) {
                 order_arges = {
                     side: Side.SELL,
                     tokenID: trade.asset,
                     amount: remaining,
-                    price: parseFloat(maxPriceBid.price),
+                    price: bidPrice,
                 };
             } else {
                 order_arges = {
                     side: Side.SELL,
                     tokenID: trade.asset,
                     amount: parseFloat(maxPriceBid.size),
-                    price: parseFloat(maxPriceBid.price),
+                    price: bidPrice,
                 };
             }
             console.log('Order args:', order_arges);
+            // Validate order amount is positive
+            if (order_arges.amount <= 0) {
+                console.log('Invalid order amount - skipping');
+                break;
+            }
+            
             const signedOrder = await clobClient.createMarketOrder(order_arges);
             const resp = await clobClient.postOrder(signedOrder, OrderType.FOK);
             if (resp.success === true) {
                 retry = 0;
                 console.log('Successfully posted order:', resp);
                 remaining -= order_arges.amount;
+                // Small delay after successful order
+                await new Promise((resolve) => setTimeout(resolve, 500));
             } else {
                 retry += 1;
-                console.log('Error posting order: retrying...', resp);
+                console.log(`Error posting order: retrying... (${retry}/${RETRY_LIMIT})`, resp);
+                // Delay before retry to avoid spamming API
+                await new Promise((resolve) => setTimeout(resolve, 2000));
             }
         }
         if (retry >= RETRY_LIMIT) {

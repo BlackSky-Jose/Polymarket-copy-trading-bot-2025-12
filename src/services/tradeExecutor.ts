@@ -38,12 +38,20 @@ const doTrading = async (clobClient: ClobClient) => {
             console.log('Trade to copy:', trade);
             
             // Fetch current positions for both wallets
-            const my_positions: UserPositionInterface[] = await fetchData(
+            const my_positions_raw = await fetchData(
                 `https://data-api.polymarket.com/positions?user=${PROXY_WALLET}`
             );
-            const user_positions: UserPositionInterface[] = await fetchData(
+            const user_positions_raw = await fetchData(
                 `https://data-api.polymarket.com/positions?user=${USER_ADDRESS}`
             );
+            
+            // Validate API responses are arrays
+            const my_positions: UserPositionInterface[] = Array.isArray(my_positions_raw) 
+                ? my_positions_raw 
+                : [];
+            const user_positions: UserPositionInterface[] = Array.isArray(user_positions_raw) 
+                ? user_positions_raw 
+                : [];
             
             // Find positions for this specific condition
             const my_position = my_positions.find(
