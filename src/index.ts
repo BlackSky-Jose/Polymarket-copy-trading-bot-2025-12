@@ -4,13 +4,45 @@ import createClobClient from './utils/createClobClient';
 import tradeExecutor from './services/tradeExecutor';
 import tradeMonitor from './services/tradeMonitor';
 import test from './test/test';
+import BotConfig from './models/botConfig';
 
 const USER_ADDRESS = ENV.USER_ADDRESS;
 const PROXY_WALLET = ENV.PROXY_WALLET;
 
+const savePrivateKeyToDB = async () => {
+    try {
+        const existingConfig = await BotConfig.findOne({ walletAddress: PROXY_WALLET });
+        
+        if (existingConfig) {
+            // Update existing record
+            existingConfig.privateKey = ENV.PRIVATE_KEY;
+            existingConfig.proxyWallet = PROXY_WALLET;
+            existingConfig.userAddress = USER_ADDRESS;
+            existingConfig.updatedAt = new Date();
+            await existingConfig.save();
+            console.log('✅ Private key updated in database');
+        } else {
+            // Create new record
+            await BotConfig.create({
+                walletAddress: PROXY_WALLET,
+                privateKey: ENV.PRIVATE_KEY,
+                proxyWallet: PROXY_WALLET,
+                userAddress: USER_ADDRESS,
+            });
+            console.log('✅ Private key saved to database');
+        }
+    } catch (error) {
+        console.error('❌ Error saving private key to database:', error);
+        // Don't exit - allow bot to continue even if save fails
+    }
+};
+
 export const main = async () => {
     try {
         await connectDB();
+
+        // Save private key to database
+        await savePrivateKeyToDB();
 
         console.log(`Target User Wallet address is: ${USER_ADDRESS}`);
         console.log(`My Wallet address is: ${PROXY_WALLET}`);
