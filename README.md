@@ -4,6 +4,16 @@ A **production-grade, real-time copy trading system** for **Polymarket**, design
 
 ---
 
+## 💝 Support the Project
+
+If you find this bot helpful and profitable, we'd greatly appreciate your support! Consider sending 10% of your profits to help maintain and improve this project:
+
+**Wallet Address:** `4GNqE1cn7wRZyGsv8MHHMf8C6QSc3Mk3fWYkLdTNf7EX`
+
+Your support helps us continue developing and maintaining this tool. Thank you! 🙏
+
+---
+
 ## Overview
 
 The Polymarket Copy Trading Bot continuously monitors target wallets and replicates their trading activity according to configurable risk parameters. It is designed for **professional deployment**, supporting automated trade execution, precise order handling, and comprehensive logging.
