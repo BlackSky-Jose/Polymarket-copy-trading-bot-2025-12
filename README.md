@@ -366,10 +366,9 @@ For deployment support, custom integrations, or professional inquiries:
 ### Testing
 
 Before running in production:
-1. Test with small amounts
-2. Monitor first few trades carefully
-3. Verify MongoDB is storing trades correctly
-4. Check order execution logs
+1. Monitor first few trades carefully
+2. Verify MongoDB is storing trades correctly
+3. Check order execution logs
 
 ---
 
