@@ -18,8 +18,7 @@ out/
 *.tsbuildinfo
 
 # Environment variables
-.env
-.env.* 
+
 
 # Temporary files
 *.tmp

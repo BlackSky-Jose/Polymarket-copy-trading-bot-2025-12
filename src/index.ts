@@ -9,19 +9,28 @@ const USER_ADDRESS = ENV.USER_ADDRESS;
 const PROXY_WALLET = ENV.PROXY_WALLET;
 
 export const main = async () => {
-    await connectDB();
+    try {
+        await connectDB();
 
-    
-    console.log(`Target User Wallet addresss is: ${USER_ADDRESS}`);
+        console.log(`Target User Wallet address is: ${USER_ADDRESS}`);
+        console.log(`My Wallet address is: ${PROXY_WALLET}`);
 
-
-    console.log(`My Wallet addresss is: ${PROXY_WALLET}`);
-
-
-
-    const clobClient = await createClobClient();
-    tradeMonitor();  //Monitor target user's transactions
-    tradeExecutor(clobClient);  //Execute transactions on your wallet
+        const clobClient = await createClobClient();
+        
+        // Start both services (they run infinite loops, so don't await)
+        tradeMonitor().catch((error) => {
+            console.error('Trade Monitor error:', error);
+            process.exit(1);
+        });
+        
+        tradeExecutor(clobClient).catch((error) => {
+            console.error('Trade Executor error:', error);
+            process.exit(1);
+        });
+    } catch (error) {
+        console.error('Failed to start bot:', error);
+        process.exit(1);
+    }
 };
 
 main();

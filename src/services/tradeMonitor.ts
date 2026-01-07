@@ -1,4 +1,3 @@
-import moment from 'moment';
 import { ENV } from '../config/env';
 import { UserActivityInterface, UserPositionInterface } from '../interfaces/User';
 import { getUserActivityModel, getUserPositionModel } from '../models/userHistory';
@@ -19,12 +18,61 @@ const UserPosition = getUserPositionModel(USER_ADDRESS);
 let temp_trades: UserActivityInterface[] = [];
 
 const init = async () => {
-    temp_trades = (await UserActivity.find().exec()).map((trade) => trade as UserActivityInterface);
+    const trades = await UserActivity.find().exec();
+    temp_trades = trades.map((trade) => trade as UserActivityInterface);
     console.log('temp_trades', temp_trades);
 };
 
 const fetchTradeData = async () => {
+    try {
+        // Fetch user activities from Polymarket API
+        const activities: UserActivityInterface[] = await fetchData(
+            `https://data-api.polymarket.com/activities?user=${USER_ADDRESS}`
+        );
 
+        if (!activities || activities.length === 0) {
+            return;
+        }
+
+        // Filter for TRADE type activities only
+        const trades = activities.filter((activity) => activity.type === 'TRADE');
+
+        // Get existing transaction hashes from database to avoid duplicates
+        const existingDocs = await UserActivity.find({}, { transactionHash: 1 }).exec();
+        const existingHashes = new Set(
+            existingDocs
+                .map((doc: { transactionHash?: string | null }) => doc.transactionHash)
+                .filter((hash): hash is string => Boolean(hash))
+        );
+
+        // Calculate cutoff timestamp (too old trades) - hours ago in milliseconds
+        const cutoffTimestamp = Date.now() - TOO_OLD_TIMESTAMP * 60 * 60 * 1000;
+
+        // Filter new trades that aren't too old
+        const newTrades = trades.filter((trade: UserActivityInterface) => {
+            const isNew = !existingHashes.has(trade.transactionHash);
+            const isRecent = trade.timestamp >= cutoffTimestamp;
+            return isNew && isRecent;
+        });
+
+        if (newTrades.length > 0) {
+            console.log(`Found ${newTrades.length} new trade(s) to process`);
+            
+            // Save new trades to database
+            for (const trade of newTrades) {
+                const activityData = {
+                    ...trade,
+                    proxyWallet: USER_ADDRESS,
+                    bot: false,
+                    botExcutedTime: 0,
+                };
+                await UserActivity.create(activityData);
+                console.log(`Saved new trade: ${trade.transactionHash}`);
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching trade data:', error);
+    }
 };
 
 const tradeMonitor = async () => {
