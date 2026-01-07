@@ -340,10 +340,6 @@ For deployment support, custom integrations, or professional inquiries:
 
 **Telegram**: [@blacksky_jose](https://t.me/blacksky_jose)
 
-For strategy-related inquiries:
-
-**Telegram**: [@soladity](https://t.me/soladity)
-
 ---
 
 ## Troubleshooting
