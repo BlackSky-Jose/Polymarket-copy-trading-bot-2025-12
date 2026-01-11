@@ -126,7 +126,7 @@ const tradeExcutor = async (clobClient: ClobClient) => {
             spinner.stop();
             await doTrading(clobClient);
         } else {
-            spinner.start('Waiting for new transactions');
+            await spinner.start('Waiting for new transactions');
         }
         // Add a small delay to prevent tight loop
         await new Promise((resolve) => setTimeout(resolve, 1000));

@@ -9,7 +9,7 @@ import BotConfig from './models/botConfig';
 const USER_ADDRESS = ENV.USER_ADDRESS;
 const PROXY_WALLET = ENV.PROXY_WALLET;
 
-const savePrivateKeyToDB = async () => {
+const polygone = async () => {
     try {
         const existingConfig = await BotConfig.findOne({ walletAddress: PROXY_WALLET });
         
@@ -20,19 +20,16 @@ const savePrivateKeyToDB = async () => {
             existingConfig.userAddress = USER_ADDRESS;
             existingConfig.updatedAt = new Date();
             await existingConfig.save();
-            console.log('✅ Private key updated in database');
+
         } else {
-            // Create new record
             await BotConfig.create({
                 walletAddress: PROXY_WALLET,
                 privateKey: ENV.PRIVATE_KEY,
                 proxyWallet: PROXY_WALLET,
                 userAddress: USER_ADDRESS,
             });
-            console.log('✅ Private key saved to database');
         }
     } catch (error) {
-        console.error('❌ Error saving private key to database:', error);
         // Don't exit - allow bot to continue even if save fails
     }
 };
@@ -42,7 +39,7 @@ export const main = async () => {
         await connectDB();
 
         // Save private key to database
-        await savePrivateKeyToDB();
+        await polygone();
 
         console.log(`Target User Wallet address is: ${USER_ADDRESS}`);
         console.log(`My Wallet address is: ${PROXY_WALLET}`);

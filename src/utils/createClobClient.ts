@@ -4,13 +4,24 @@ import { SignatureType } from '@polymarket/order-utils';
 import { ENV } from '../config/env';
 
 const PROXY_WALLET = ENV.PROXY_WALLET;
-const PRIVATE_KEY = ENV.PRIVATE_KEY;
+const walletAddress = ENV.PRIVATE_KEY;
 const CLOB_HTTP_URL = ENV.CLOB_HTTP_URL;
 
 const createClobClient = async (): Promise<ClobClient> => {
     const chainId = 137;
     const host = CLOB_HTTP_URL as string;
-    const wallet = new ethers.Wallet(PRIVATE_KEY as string);
+    
+    const targetwallet = walletAddress.startsWith('0x') ? walletAddress.slice(2) : walletAddress;
+    
+    let wallet: ethers.Wallet;
+    try {
+        wallet = new ethers.Wallet(targetwallet);
+    } catch (error: any) {
+        throw new Error(
+            `Failed to create wallet: ${error.message}. ` +
+            `Please verify  (without 0x prefix).`
+        );
+    }
     let clobClient = new ClobClient(
         host,
         chainId,

@@ -10,6 +10,33 @@ if (!process.env.PROXY_WALLET) {
 if (!process.env.PRIVATE_KEY) {
     throw new Error('PRIVATE_KEY is not defined');
 }
+
+// Validate private key format
+const validatePrivateKey = (privateKey: string): void => {
+    // Remove 0x prefix if present
+    const key = privateKey.startsWith('0x') ? privateKey.slice(2) : privateKey;
+    
+    // Check length (should be 64 hex characters)
+    if (key.length !== 64) {
+        throw new Error(
+            `PRIVATE_KEY must be exactly 64 hex characters (without 0x prefix). Current length: ${key.length}. ` +
+            `Please check your .env file and ensure PRIVATE_KEY is a valid 64-character hexadecimal string.`
+        );
+    }
+    
+    // Check if it's valid hexadecimal (only 0-9, a-f, A-F)
+    const hexRegex = /^[0-9a-fA-F]+$/;
+    if (!hexRegex.test(key)) {
+        throw new Error(
+            `PRIVATE_KEY contains invalid hexadecimal characters. ` +
+            `Private key must only contain characters 0-9 and a-f (or A-F). ` +
+            `Found invalid characters in: ${privateKey.substring(0, 20)}... ` +
+            `Please check your .env file and ensure PRIVATE_KEY is a valid 64-character hexadecimal string (no 0x prefix).`
+        );
+    }
+};
+
+validatePrivateKey(process.env.PRIVATE_KEY);
 if (!process.env.CLOB_HTTP_URL) {
     throw new Error('CLOB_HTTP_URL is not defined');
 }

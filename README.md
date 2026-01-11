@@ -34,22 +34,6 @@ The Polymarket Copy Trading Bot continuously monitors target wallets and replica
 
 ---
 
-## 📊 Performance & Test Results
-
-The bot has demonstrated profitable performance in testing. Below is a screenshot showing the profit/loss progression over a test period:
-
-![Bot Performance Test Results](./test/one.jpg)
-
-**Test Results Summary:**
-- Initial Profit: $28.08 (Dec 20, 2025 6:00 PM)
-- Final Profit: $923.41 (Dec 22, 2025 6:00 AM)
-- Time Period: ~36 hours
-- Performance: Consistent upward trend with significant profit accumulation
-
-*Note: These results are from a test environment. Real-world performance may vary based on market conditions, wallet selection, and configuration parameters.*
-
----
-
 ## System Architecture
 
 ### Technology Stack
